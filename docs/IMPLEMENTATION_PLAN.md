@@ -20,12 +20,13 @@
 
 ## 2. Active Feature Checklist (Work-in-Progress)
 
-Daftar fitur yang sedang aktif dalam antrean pengerjaan. *(Hapus item dari daftar ini saat selesai diuji)*:
+Daftar fitur yang sedang aktif dalam antrean pengerjaan. *(Item yang telah selesai langsung dieliminasi sesuai protokol)*:
 
-- [ ] **[Fase 1.1]** Ekstraksi dan isolasi vokal referensi karakter asli dalam Bahasa Inggris (Elliot Alderson / Batman 10–15s, mono, 48kHz WAV) bebas noise latar belakang.
-- [ ] **[Fase 1.2]** Setup environment Python FastAPI + PyTorch CUDA dengan checkpoint model Fish Speech FP16 (Pendekatan A: Cross-Lingual).
-- [ ] **[Fase 1.3]** Implementasi endpoint `POST /v1/synthesize` pada worker Python dan uji validasi kloning vokal lintas bahasa (sampel EN $\to$ sintesis teks Bahasa Indonesia 3–5 detik).
-- [ ] **[Fase 1.4]** Pengukuran *Real-Time Factor* (RTF $\le 0.35$), audit artikulasi fonem Bahasa Indonesia, dan audit konsumsi VRAM pada GPU workstation.
+- [ ] **[Fase 1.4]** Pengukuran *Real-Time Factor* (RTF $\le 0.35$), audit artikulasi fonem Bahasa Indonesia, dan audit konsumsi VRAM pada GPU cloud.
+- [ ] **[Fase 2.1]** Pembuatan struktur project Golang (`apps/orchestrator`) dengan Go modules dan internal domain boundaries.
+- [ ] **[Fase 2.2]** Implementasi modul `chunker` di Go dengan regex boundary preservation untuk batas 150–250 karakter.
+- [ ] **[Fase 2.3]** Implementasi Go HTTP client ke LLM provider (Ollama / DeepSeek) dengan streaming token buffer.
+- [ ] **[Fase 2.4]** Implementasi SQLite storage dengan WAL mode untuk tabel `personas`, `render_jobs`, dan `job_chunks`.
 - [ ] **[Fase 2.1]** Pembuatan struktur project Golang (`apps/orchestrator`) dengan Go modules dan internal domain boundaries.
 - [ ] **[Fase 2.2]** Implementasi modul `chunker` di Go dengan regex boundary preservation untuk batas 150–250 karakter.
 - [ ] **[Fase 2.3]** Implementasi Go HTTP client ke LLM provider (Ollama / DeepSeek) dengan streaming token buffer.
