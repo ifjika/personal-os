@@ -60,8 +60,8 @@ func (m *FFmpegMixer) StitchAndMaster(ctx context.Context, chunkPaths []string, 
 		}
 	}
 
-	// 4. Enforce broadcast loudness normalization (EBU R128 Mastering)
-	filterComplex += fmt.Sprintf("[%s]loudnorm=I=-16:LRA=7:TP=-1.5[out]", lastLabel)
+	// 4. Enforce vocal gain boost and broadcast loudness normalization (EBU R128 -14 LUFS for mobile)
+	filterComplex += fmt.Sprintf("[%s]volume=1.8,loudnorm=I=-14:LRA=7:TP=-1.0[out]", lastLabel)
 
 	args = append(args,
 		"-filter_complex", filterComplex,

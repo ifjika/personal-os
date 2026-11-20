@@ -2,6 +2,17 @@
 .env
 .env.local
 .env.*.local
+.dev.vars
+
+# Cloudflare Wrangler
+.wrangler/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
 
 # Compiled binaries
 *.exe

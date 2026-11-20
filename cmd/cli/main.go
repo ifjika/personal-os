@@ -12,6 +12,7 @@ import (
 
 	"personal-os/internal/audio"
 	"personal-os/internal/chunker"
+	"personal-os/internal/dispatcher"
 	"personal-os/internal/domain"
 	"personal-os/internal/prompt"
 	"personal-os/internal/synthesizer"
@@ -31,7 +32,7 @@ func main() {
 	case "generate":
 		handleGenerate(os.Args[2:])
 	case "version":
-		fmt.Println("Personal OS Engine v0.2.3-alpha")
+		fmt.Println("Personal OS Engine v0.4.0")
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n\n", command)
 		printUsage()
@@ -50,6 +51,9 @@ func printUsage() {
 	fmt.Println("  --gemini-key  Google Gemini API key for dynamic AI monologues (or GEMINI_API_KEY env)")
 	fmt.Println("  --ambient     Path to ambient background audio track (optional)")
 	fmt.Println("  --output      Path for the final master MP3 audio output")
+	fmt.Println("  --telegram    Dispatch master audio to Telegram Bot upon completion (optional)")
+	fmt.Println("  --tg-token    Telegram Bot Token (or TELEGRAM_BOT_TOKEN env)")
+	fmt.Println("  --tg-chat-id  Telegram Chat ID (or TELEGRAM_CHAT_ID env)")
 }
 
 func handleGenerate(args []string) {
@@ -61,6 +65,9 @@ func handleGenerate(args []string) {
 	ttsURL := fs.String("tts-url", os.Getenv("TTS_URL"), "Cloud or local TTS endpoint URL (defaults to TTS_URL env)")
 	ambientPath := fs.String("ambient", "", "Path to ambient background track (optional)")
 	geminiKey := fs.String("gemini-key", os.Getenv("GEMINI_API_KEY"), "Google Gemini API key (defaults to GEMINI_API_KEY env)")
+	enableTelegram := fs.Bool("telegram", false, "Send master MP3 to Telegram Bot")
+	tgToken := fs.String("tg-token", os.Getenv("TELEGRAM_BOT_TOKEN"), "Telegram Bot Token")
+	tgChatID := fs.String("tg-chat-id", os.Getenv("TELEGRAM_CHAT_ID"), "Telegram Chat ID")
 
 	defaultOutput := filepath.Join("storage", "output", fmt.Sprintf("daily_%s.mp3", time.Now().Format("2006-01-02")))
 	outputPath := fs.String("output", defaultOutput, "Destination path for master MP3")
@@ -156,7 +163,26 @@ func handleGenerate(args []string) {
 		os.Exit(1)
 	}
 
-	// 6. Completion
+	// 6. Optional Telegram Bot Dispatch
+	var tgSent bool
+	if *enableTelegram || (*tgToken != "" && *tgChatID != "") {
+		fmt.Println("⏳ [5/5] Dispatching master audio to Telegram Bot...")
+		tg := dispatcher.NewTelegramDispatcher(*tgToken, *tgChatID)
+		summary := *topic
+		if geminiG, ok := scriptGen.(*prompt.GeminiScriptGenerator); ok && geminiG.LastSummary != "" {
+			summary = geminiG.LastSummary
+		}
+		caption := fmt.Sprintf("🎙️ *Personal OS — Motivation Engine*\n\n📌 *Topic:* _%s_\n📝 *Summary:* _%s_\n\n_\"Hello, friend...\"_", *topic, summary)
+		title := fmt.Sprintf("Motivation: %s", *topic)
+		if err := tg.SendAudio(ctx, *outputPath, caption, title, persona.Name); err != nil {
+			fmt.Fprintf(os.Stderr, "⚠️ Telegram dispatch failed: %v\n", err)
+		} else {
+			tgSent = true
+			fmt.Printf("      -> Successfully delivered audio to Telegram (Chat ID: %s)!\n", *tgChatID)
+		}
+	}
+
+	// 7. Completion
 	elapsed := time.Since(startTime)
 	fmt.Println("==================================================")
 	fmt.Println("🎉 SUCCESS! Daily Master Audio Generated!")
@@ -168,6 +194,9 @@ func handleGenerate(args []string) {
 			geminiG.LastUsage.TotalTokens, geminiG.LastUsage.PromptTokens, geminiG.LastUsage.CandidateTokens)
 	} else {
 		fmt.Println("🪙  Gemini Tokens Spent : N/A (Offline Builtin template used)")
+	}
+	if tgSent {
+		fmt.Printf("📲 Telegram Delivery    : Sent to Chat %s\n", *tgChatID)
 	}
 	fmt.Println("==================================================")
 }

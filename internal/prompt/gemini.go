@@ -18,10 +18,11 @@ import (
 
 // GeminiScriptGenerator generates dynamic Elliot Alderson scripts using Google Gemini API.
 type GeminiScriptGenerator struct {
-	APIKey     string
-	Model      string
-	HTTPClient *http.Client
-	LastUsage  UsageMetadata
+	APIKey      string
+	Model       string
+	HTTPClient  *http.Client
+	LastUsage   UsageMetadata
+	LastSummary string
 }
 
 // UsageMetadata captures token consumption metrics from the Gemini API.
@@ -76,9 +77,10 @@ type geminiRequest struct {
 	SystemInstruction *geminiContent  `json:"systemInstruction,omitempty"`
 	Contents          []geminiContent `json:"contents"`
 	GenerationConfig  struct {
-		Temperature     float64 `json:"temperature"`
-		MaxOutputTokens int     `json:"maxOutputTokens"`
-		ThinkingConfig  *struct {
+		Temperature      float64 `json:"temperature"`
+		MaxOutputTokens  int     `json:"maxOutputTokens"`
+		ResponseMimeType string  `json:"responseMimeType,omitempty"`
+		ThinkingConfig   *struct {
 			ThinkingBudget int `json:"thinkingBudget"`
 		} `json:"thinkingConfig,omitempty"`
 	} `json:"generationConfig"`
@@ -122,13 +124,14 @@ func (g *GeminiScriptGenerator) Generate(ctx context.Context, persona domain.Per
 		Contents: []geminiContent{
 			{
 				Parts: []geminiPart{
-					{Text: fmt.Sprintf("Today's topic to deconstruct and correlate with the system and game of life: %s. Speak for exactly 110 to 130 words (approximately 1 minute of slow, deliberate speech).", cleanTopic)},
+					{Text: fmt.Sprintf("Today's topic to deconstruct and correlate with the system and game of life: %s. Respond in strict JSON format with two fields: \"summary\" (a punchy 1-sentence executive takeaway summarizing the stoic solution) and \"monologue\" (exactly 110 to 130 spoken words calibrated for 1 minute of slow, deliberate speech).", cleanTopic)},
 				},
 			},
 		},
 	}
 	reqPayload.GenerationConfig.Temperature = 0.85
-	reqPayload.GenerationConfig.MaxOutputTokens = 800
+	reqPayload.GenerationConfig.MaxOutputTokens = 900
+	reqPayload.GenerationConfig.ResponseMimeType = "application/json"
 	reqPayload.GenerationConfig.ThinkingConfig = &struct {
 		ThinkingBudget int `json:"thinkingBudget"`
 	}{
@@ -194,8 +197,20 @@ func (g *GeminiScriptGenerator) Generate(ctx context.Context, persona domain.Per
 
 		rawText := geminiResp.Candidates[0].Content.Parts[0].Text
 
+		var jsonPayload struct {
+			Summary   string `json:"summary"`
+			Monologue string `json:"monologue"`
+		}
+		spokenText := rawText
+		if err := json.Unmarshal([]byte(rawText), &jsonPayload); err == nil && jsonPayload.Monologue != "" {
+			spokenText = jsonPayload.Monologue
+			g.LastSummary = strings.TrimSpace(markdownCleanupRegex.ReplaceAllString(jsonPayload.Summary, ""))
+		} else {
+			g.LastSummary = cleanTopic
+		}
+
 		// Clean any residual markdown characters to guarantee pristine TTS pronunciation
-		cleanedText := markdownCleanupRegex.ReplaceAllString(rawText, "")
+		cleanedText := markdownCleanupRegex.ReplaceAllString(spokenText, "")
 		cleanedText = strings.Join(strings.Fields(cleanedText), " ")
 
 		return cleanedText, nil
