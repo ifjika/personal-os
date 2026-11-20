@@ -1,0 +1,13 @@
+name = "personal-os-cron"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+# Trigger twice daily: at 23:00 and 11:00 UTC (06:00 and 18:00 WIB)
+[triggers]
+crons = ["0 11,23 * * *"]
+
+# Environment variables needed (set these in Cloudflare Dashboard or .dev.vars)
+# GEMINI_API_KEY = "..."
+# TTS_URL = "https://ifjika-personal-os.hf.space"
+# TELEGRAM_BOT_TOKEN = "..."
+# TELEGRAM_CHAT_ID = "..."
