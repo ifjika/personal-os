@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"personal-os/internal/audio"
@@ -16,6 +18,8 @@ import (
 )
 
 func main() {
+	loadEnvFile(".env")
+
 	if len(os.Args) < 2 {
 		printUsage()
 		os.Exit(1)
@@ -27,7 +31,7 @@ func main() {
 	case "generate":
 		handleGenerate(os.Args[2:])
 	case "version":
-		fmt.Println("Personal OS Engine v0.1.0-alpha")
+		fmt.Println("Personal OS Engine v0.2.3-alpha")
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n\n", command)
 		printUsage()
@@ -43,17 +47,20 @@ func printUsage() {
 	fmt.Println("  --topic       Target theme for motivation monologue (required)")
 	fmt.Println("  --persona     Vocal persona preset (default: elliot)")
 	fmt.Println("  --tts-url     Remote/Cloud TTS endpoint URL (e.g. Hugging Face Space)")
+	fmt.Println("  --gemini-key  Google Gemini API key for dynamic AI monologues (or GEMINI_API_KEY env)")
 	fmt.Println("  --ambient     Path to ambient background audio track (optional)")
 	fmt.Println("  --output      Path for the final master MP3 audio output")
 }
 
 func handleGenerate(args []string) {
+	startTime := time.Now()
 	fs := flag.NewFlagSet("generate", flag.ExitOnError)
 
 	topic := fs.String("topic", "conquering daily overthinking", "Motivation monologue theme")
 	personaID := fs.String("persona", "elliot", "Vocal persona identifier")
-	ttsURL := fs.String("tts-url", "", "Cloud or local TTS endpoint URL")
+	ttsURL := fs.String("tts-url", os.Getenv("TTS_URL"), "Cloud or local TTS endpoint URL (defaults to TTS_URL env)")
 	ambientPath := fs.String("ambient", "", "Path to ambient background track (optional)")
+	geminiKey := fs.String("gemini-key", os.Getenv("GEMINI_API_KEY"), "Google Gemini API key (defaults to GEMINI_API_KEY env)")
 
 	defaultOutput := filepath.Join("storage", "output", fmt.Sprintf("daily_%s.mp3", time.Now().Format("2006-01-02")))
 	outputPath := fs.String("output", defaultOutput, "Destination path for master MP3")
@@ -86,17 +93,31 @@ func handleGenerate(args []string) {
 	ctx := context.Background()
 
 	// 2. Script Generation Stage
-	fmt.Println("⏳ [1/4] Generating daily introspective script...")
-	scriptGen := prompt.NewBuiltinScriptGenerator()
+	var scriptGen prompt.ScriptGenerator
+	if *geminiKey != "" {
+		fmt.Printf("⏳ [1/4] Generating dynamic script with Gemini AI (Topic: \"%s\")...\n", *topic)
+		scriptGen = prompt.NewGeminiScriptGenerator(*geminiKey)
+	} else {
+		fmt.Println("⏳ [1/4] Generating script using Builtin template (Set GEMINI_API_KEY for dynamic AI)...")
+		scriptGen = prompt.NewBuiltinScriptGenerator()
+	}
+
 	script, err := scriptGen.Generate(ctx, persona, *topic)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Script generation failed: %v\n", err)
 		os.Exit(1)
 	}
+	words := len(strings.Fields(script))
+	if geminiG, ok := scriptGen.(*prompt.GeminiScriptGenerator); ok && geminiG.LastUsage.TotalTokens > 0 {
+		fmt.Printf("      -> Monologue generated: %d words (%d chars) [Tokens: %d in / %d out / %d total].\n",
+			words, len(script), geminiG.LastUsage.PromptTokens, geminiG.LastUsage.CandidateTokens, geminiG.LastUsage.TotalTokens)
+	} else {
+		fmt.Printf("      -> Monologue generated: %d words (%d chars).\n", words, len(script))
+	}
 
 	// 3. Acoustic Boundary Chunking Stage
 	fmt.Println("⏳ [2/4] Partitioning script into acoustic boundary chunks...")
-	textChunker := chunker.NewBoundaryChunker(100, 250)
+	textChunker := chunker.NewBoundaryChunker(120, 280)
 	chunks, err := textChunker.Chunk(script)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Text chunking failed: %v\n", err)
@@ -128,7 +149,7 @@ func handleGenerate(args []string) {
 	}
 
 	// 5. Audio Post-Processing: Crossfade, Ambient Layering & EBU R128 Mastering
-	fmt.Println("⏳ [4/4] Executing 100ms crossfade stitching & EBU R128 mastering...")
+	fmt.Println("⏳ [4/4] Executing equal-power 250ms crossfade stitching & EBU R128 mastering...")
 	mixer := audio.NewFFmpegMixer()
 	if err := mixer.StitchAndMaster(ctx, chunkPaths, *ambientPath, *outputPath); err != nil {
 		fmt.Fprintf(os.Stderr, "Audio mastering failed: %v\n", err)
@@ -136,8 +157,43 @@ func handleGenerate(args []string) {
 	}
 
 	// 6. Completion
+	elapsed := time.Since(startTime)
 	fmt.Println("==================================================")
 	fmt.Println("🎉 SUCCESS! Daily Master Audio Generated!")
 	fmt.Println("==================================================")
-	fmt.Printf("📁 Playable Master File: %s\n\n", *outputPath)
+	fmt.Printf("📁 Playable Master File : %s\n", *outputPath)
+	fmt.Printf("⏱️  Total Process Time  : %s\n", elapsed.Round(100*time.Millisecond))
+	if geminiG, ok := scriptGen.(*prompt.GeminiScriptGenerator); ok && geminiG.LastUsage.TotalTokens > 0 {
+		fmt.Printf("🪙  Gemini Tokens Spent : %d tokens (%d prompt / %d output)\n",
+			geminiG.LastUsage.TotalTokens, geminiG.LastUsage.PromptTokens, geminiG.LastUsage.CandidateTokens)
+	} else {
+		fmt.Println("🪙  Gemini Tokens Spent : N/A (Offline Builtin template used)")
+	}
+	fmt.Println("==================================================")
+}
+
+// loadEnvFile reads key=value pairs from a .env file and sets environment variables if not already present.
+func loadEnvFile(path string) {
+	file, err := os.Open(path)
+	if err != nil {
+		return // .env is optional
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) == 2 {
+			key := strings.TrimSpace(parts[0])
+			val := strings.TrimSpace(parts[1])
+			val = strings.Trim(val, `"'`)
+			if os.Getenv(key) == "" {
+				os.Setenv(key, val)
+			}
+		}
+	}
 }

@@ -1,79 +1,65 @@
 # Implementation Plan & Execution Roadmap
+
 ## Personal OS: AI Audio Motivation Engine
 
+**Current Version:** `v0.2.3-alpha`  
+**Last Updated:** `2026-11-20`
+
 > **Operational Directive:**
-> Gunakan daftar ceklis di bawah untuk melacak fitur yang sedang aktif dikerjakan. Sesuai protokol, **apabila suatu fitur telah selesai diimplementasikan dan diverifikasi, hilangkan baris fitur tersebut dari daftar ceklis aktif** agar dokumen tetap ringkas, bersih, dan hanya merefleksikan pekerjaan yang sedang berjalan (*WIP*).
+> Use the active checklist below to track features currently under development. In accordance with the protocol, **completed and verified features are eliminated from the active checklist** to ensure the document remains concise, clean, and exclusively reflective of active work-in-progress (WIP).
 
 ---
 
-## 1. Phase-Based Roadmap
+## 1. Phase-Based Roadmap & Milestone Status
 
-| Fase | Fokus Utama | Target Deliverables | Estimasi | Status |
-| :--- | :--- | :--- | :--- | :--- |
-| **Fase 1** | **Acoustic & Voice Validation** | Sampel vokal bersih (Elliot & Batman), uji inferensi F5-TTS lokal, verifikasi RTF $\le 0.35$. | 3 Hari | `IN_PROGRESS` |
-| **Fase 2** | **Core Orchestrator & Chunker** | Golang boundary chunker, integrasi client LLM (Ollama/DeepSeek), HTTP client ke worker Python. | 4 Hari | `PENDING` |
-| **Fase 3** | **Audio Post-Processing Pipeline** | Golang FFmpeg runner, dynamic crossfade concatenation, EBU R128 loudness normalization, ambient mixer. | 4 Hari | `PENDING` |
-| **Fase 4** | **Web Studio & Telemetry** | Terminal Noir UI (Next.js/Tailwind), visualizer canvas, SSE log streamer, multi-track mixer. | 5 Hari | `PENDING` |
-| **Fase 5** | **Automation & Packaging** | Cron background trigger, CLI binary, Docker Compose GPU deployment, E2E stress testing. | 3 Hari | `PENDING` |
+| Phase       | Core Focus                             | Target Deliverables                                                                                    | Status           | Version        |
+| :---------- | :------------------------------------- | :----------------------------------------------------------------------------------------------------- | :--------------- | :------------- |
+| **Phase 1** | **Acoustic & Voice Validation**        | Clean vocal reference isolation, Elliot Alderson voice persona lock, target language alignment (`en`). | `COMPLETED` ✅   | `v0.1.0-alpha` |
+| **Phase 2** | **Core Orchestrator & Chunker**        | Go domain boundaries, boundary chunker (100–250 chars), prompt generator, SQLite storage.              | `IN_PROGRESS` ⏳ | `v0.2.0-alpha` |
+| **Phase 3** | **Audio Post-Processing & TTS Client** | FFmpeg 100ms crossfade, EBU R128 mastering, Hugging Face 24/7 F5-TTS cloud deployment.                 | `COMPLETED` ✅   | `v0.2.0-alpha` |
+| **Phase 4** | **Web Studio & Telemetry**             | Terminal Noir UI (Next.js/Tailwind), canvas waveform visualizer, SSE log streamer.                     | `PENDING` 📋     | `v0.3.0-alpha` |
+| **Phase 5** | **Automation & Dispatch**              | Scheduled cron trigger, Telegram Bot audio dispatcher, Docker containerization.                        | `PENDING` 📋     | `v0.4.0-alpha` |
 
 ---
 
 ## 2. Active Feature Checklist (Work-in-Progress)
 
-Daftar fitur yang sedang aktif dalam antrean pengerjaan. *(Item yang telah selesai langsung dieliminasi sesuai protokol)*:
+Items currently in progress or queued for immediate implementation _(Completed items have been purged per protocol)_:
 
-- [ ] **[Fase 1.4]** Pengukuran *Real-Time Factor* (RTF $\le 0.35$), audit artikulasi fonem Bahasa Indonesia, dan audit konsumsi VRAM pada GPU cloud.
-- [ ] **[Fase 2.1]** Pembuatan struktur project Golang (`apps/orchestrator`) dengan Go modules dan internal domain boundaries.
-- [ ] **[Fase 2.2]** Implementasi modul `chunker` di Go dengan regex boundary preservation untuk batas 150–250 karakter.
-- [ ] **[Fase 2.3]** Implementasi Go HTTP client ke LLM provider (Ollama / DeepSeek) dengan streaming token buffer.
-- [ ] **[Fase 2.4]** Implementasi SQLite storage dengan WAL mode untuk tabel `personas`, `render_jobs`, dan `job_chunks`.
-- [ ] **[Fase 2.1]** Pembuatan struktur project Golang (`apps/orchestrator`) dengan Go modules dan internal domain boundaries.
-- [ ] **[Fase 2.2]** Implementasi modul `chunker` di Go dengan regex boundary preservation untuk batas 150–250 karakter.
-- [ ] **[Fase 2.3]** Implementasi Go HTTP client ke LLM provider (Ollama / DeepSeek) dengan streaming token buffer.
-- [ ] **[Fase 2.4]** Implementasi SQLite storage dengan WAL mode untuk tabel `personas`, `render_jobs`, dan `job_chunks`.
-- [ ] **[Fase 3.1]** Pembuatan builder parameter FFmpeg di Go untuk *linear crossfade* antar chunk audio.
-- [ ] **[Fase 3.2]** Implementasi multi-input *audio mixing* (vokal + brown noise loop) dengan filter `amix`.
-- [ ] **[Fase 3.3]** Penegakan normalisasi EBU R128 (`loudnorm=I=-16:LRA=7:TP=-1.5`) dan encoding master MP3 320kbps.
-- [ ] **[Fase 4.1]** Inisialisasi frontend Web Studio (`apps/web-console`) dengan Tailwind CSS tokens *Terminal Noir*.
-- [ ] **[Fase 4.2]** Komponen Canvas Waveform Visualizer & Audio Scrubber interaktif.
-- [ ] **[Fase 4.3]** Hook SSE (`useJobLogs`) untuk streaming log real-time dari Go orchestrator ke web console.
-- [ ] **[Fase 5.1]** CLI command `personal-os generate --persona elliot --topic "..."` menggunakan Go Cobra.
-- [ ] **[Fase 5.2]** Konfigurasi Docker Compose untuk orkestrasi worker Python (GPU passthrough) dan backend Go.
+- [ ] **[Phase 2.4]** Implement SQLite persistence layer (`internal/repository`) with WAL mode (`PRAGMA journal_mode=WAL;`) for `personas`, `render_jobs`, and `job_chunks`.
+- [ ] **[Phase 4.1]** Scaffold Web Studio frontend (`apps/web-console`) using Next.js App Router and _Terminal Noir_ Tailwind design tokens.
+- [ ] **[Phase 4.2]** Develop interactive HTML5 Canvas Waveform Visualizer & Audio Scrubber component.
+- [ ] **[Phase 4.3]** Implement Server-Sent Events (SSE) hook (`useJobLogs`) for real-time log streaming from Go orchestrator to Web Console.
+- [ ] **[Phase 5.1]** Build Telegram Bot Dispatcher (`internal/dispatcher`) to automatically deliver mastered MP3 audio to mobile devices.
+- [ ] **[Phase 5.2]** Set up 24/7 cloud cron trigger (Cloudflare Worker Cron / GitHub Actions) to run daily generation cycles automatically.
 
 ---
 
-## 3. Execution Dependency Graph
+## 3. Verified & Completed Milestones (Archive)
 
-```mermaid
-flowchart TD
-    P1_1["1.1 Clean Audio Isolation"] --> P1_2["1.2 Setup Python PyTorch Env"]
-    P1_2 --> P1_3["1.3 FastAPI /v1/synthesize"]
-    P1_3 --> P1_4["1.4 RTF & VRAM Benchmarks"]
+The following components have been implemented, tested, and verified:
 
-    P1_4 --> P2_1["2.1 Go Orchestrator Scaffolding"]
-    P2_1 --> P2_2["2.2 Boundary Chunker Engine"]
-    P2_1 --> P2_3["2.3 LLM Client Integration"]
-    P2_1 --> P2_4["2.4 SQLite Schema & Migrations"]
-
-    P2_2 & P1_3 --> P3_1["3.1 FFmpeg Crossfade Runner"]
-    P3_1 --> P3_2["3.2 Ambient Mixer (Brown Noise)"]
-    P3_2 --> P3_3["3.3 EBU R128 Mastering Filter"]
-
-    P3_3 --> P4_1["4.1 Next.js Web Console Scaffolding"]
-    P4_1 --> P4_2["4.2 Canvas Waveform Visualizer"]
-    P4_1 --> P4_3["4.3 Real-Time SSE Log Streamer"]
-
-    P4_3 & P3_3 --> P5_1["5.1 Go Cobra CLI"]
-    P5_1 --> P5_2["5.2 Docker Compose GPU Deployment"]
-```
-
----
-
-## 4. Critical Path & Blocker Mitigation
-
-1. **GPU Worker Cold-Start Latency:**
-   - *Risiko:* Python memuat model dari disk pada setiap request, menyebabkan lonjakan latensi.
-   - *Solusi:* Model dimuat satu kali saat startup aplikasi FastAPI (`lifespan` handler) dan dipertahankan dalam memory VRAM.
-2. **FFmpeg Filtergraph String Complexity:**
-   - *Risiko:* Menjahit 40+ chunk dalam satu filtergraph dapat melebihi batas panjang argumen shell sistem operasi.
-   - *Solusi:* Gunakan *concat demuxer file list* untuk rekonsiliasi chunk dasar, kemudian terapkan filter ambient dan loudnorm pada pass kedua.
+1. **Vocal Persona Lock (`internal/domain/persona.go`):**
+   - Locked to **Elliot Alderson** (`storage/references/processed/elliot_ref_15s.wav`).
+   - Standardized target language to English (`en`) for native phoneme fluidity and zero-hallucination cadence.
+2. **Boundary-Aware Acoustic Chunker (`internal/chunker`):**
+   - Implemented regex-based clause boundary chunker (`100–250 characters`).
+   - Verified 100% PASS with table-driven tests (`chunker_test.go`).
+3. **Dynamic Daily Monologue Generator (`internal/prompt`):**
+   - Implemented `GeminiScriptGenerator` querying Google Gemini API (`gemini-3-flash-preview` / `gemini-flash-latest`) with custom system prompt rules: societal systemic loops, reality as a game, and stoic mental control.
+   - Fixed reasoning budget exhaustion bug by setting `thinkingBudget: 0` and `maxOutputTokens: 2500` to prevent monologue cutoff.
+   - Added real-time token telemetry (`UsageMetadata`) logging prompt, candidate, and total token counts.
+   - Built automatic markdown scrubbing pipeline to deliver pure speech text to TTS.
+   - Maintained `BuiltinScriptGenerator` as deterministic offline fallback.
+4. **FFmpeg Post-Processor (`internal/audio`):**
+   - Implemented dynamic `filter_complex` builder for 100ms linear crossfade (`acrossfade=d=0.1:c1=tri:c2=tri`).
+   - Implemented multi-track ambient layer mixing (`amix=inputs=2:duration=first`) with -18 dB ducking.
+   - Enforced broadcast loudness compliance: **EBU R128 (`loudnorm=I=-16:LRA=7:TP=-1.5`)** and master MP3 320kbps encoding.
+   - Verified 100% PASS with synthetic sine wave test suite (`mixer_test.go`).
+5. **Dual-Mode Synthesizer Client (`internal/synthesizer`):**
+   - Implemented `HTTPSynthesizer` for streaming cloud WAV audio directly to disk (`io.Copy`).
+   - Implemented `EdgeTTSSynthesizer` (local zero-GPU fallback via `python -m edge_tts`).
+   - Implemented `MockSynthesizer` for deterministic offline development.
+6. **24/7 Cloud Zero-Shot Neural TTS Worker (`deploy/hf-space`):**
+   - Successfully deployed to Hugging Face Spaces (CPU 16GB RAM) running **F5-TTS**.
+   - Dual interface: Web GUI (Gradio) + REST API endpoint (`POST /v1/tts`).

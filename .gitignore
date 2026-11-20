@@ -1,0 +1,22 @@
+# Environment variables and secrets
+.env
+.env.local
+.env.*.local
+
+# Compiled binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+
+# Media caches and runtime outputs
+storage/cache/*
+!storage/cache/.gitkeep
+storage/output/*
+!storage/output/.gitkeep
+
+# Operating system artifacts
+.DS_Store
+Thumbs.db

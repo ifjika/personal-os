@@ -37,14 +37,15 @@ func (m *FFmpegMixer) StitchAndMaster(ctx context.Context, chunkPaths []string, 
 		args = append(args, "-i", p)
 	}
 
-	// 2. Build dynamic filter_complex graph with 100ms crossfade
+	// 2. Build dynamic filter_complex graph with 250ms equal-power quarter-sine crossfade
 	var filterComplex string
 	lastLabel := "0:a"
 
 	if len(chunkPaths) > 1 {
 		for i := 1; i < len(chunkPaths); i++ {
 			outLabel := fmt.Sprintf("v%d", i)
-			filterComplex += fmt.Sprintf("[%s][%d:a]acrossfade=d=0.1:c1=tri:c2=tri[%s];", lastLabel, i, outLabel)
+			// Equal-power quarter-sine (qsin) curve maintains constant acoustic energy across transitions without 3dB volume dips
+			filterComplex += fmt.Sprintf("[%s][%d:a]acrossfade=d=0.25:c1=qsin:c2=qsin[%s];", lastLabel, i, outLabel)
 			lastLabel = outLabel
 		}
 	}
