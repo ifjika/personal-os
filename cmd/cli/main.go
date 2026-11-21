@@ -45,7 +45,7 @@ func printUsage() {
 	fmt.Println("\nUsage:")
 	fmt.Println("  personal-os generate [options]")
 	fmt.Println("\nOptions:")
-	fmt.Println("  --topic       Target theme for motivation monologue (required)")
+	fmt.Println("  --topic       Target theme for motivation monologue (optional; auto-generates if omitted)")
 	fmt.Println("  --persona     Vocal persona preset (default: elliot)")
 	fmt.Println("  --tts-url     Remote/Cloud TTS endpoint URL (e.g. Hugging Face Space)")
 	fmt.Println("  --gemini-key  Google Gemini API key for dynamic AI monologues (or GEMINI_API_KEY env)")
@@ -60,7 +60,7 @@ func handleGenerate(args []string) {
 	startTime := time.Now()
 	fs := flag.NewFlagSet("generate", flag.ExitOnError)
 
-	topic := fs.String("topic", "conquering daily overthinking", "Motivation monologue theme")
+	topic := fs.String("topic", "", "Motivation monologue theme (optional; dynamic if omitted)")
 	personaID := fs.String("persona", "elliot", "Vocal persona identifier")
 	ttsURL := fs.String("tts-url", os.Getenv("TTS_URL"), "Cloud or local TTS endpoint URL (defaults to TTS_URL env)")
 	ambientPath := fs.String("ambient", "", "Path to ambient background track (optional)")
@@ -102,7 +102,11 @@ func handleGenerate(args []string) {
 	// 2. Script Generation Stage
 	var scriptGen prompt.ScriptGenerator
 	if *geminiKey != "" {
-		fmt.Printf("⏳ [1/4] Generating dynamic script with Gemini AI (Topic: \"%s\")...\n", *topic)
+		if *topic != "" {
+			fmt.Printf("⏳ [1/4] Generating dynamic script with Gemini AI (Topic: \"%s\")...\n", *topic)
+		} else {
+			fmt.Println("⏳ [1/4] Generating dynamic script with Gemini AI (Auto-generated novel topic)...")
+		}
 		scriptGen = prompt.NewGeminiScriptGenerator(*geminiKey)
 	} else {
 		fmt.Println("⏳ [1/4] Generating script using Builtin template (Set GEMINI_API_KEY for dynamic AI)...")

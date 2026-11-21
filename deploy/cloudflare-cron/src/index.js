@@ -21,6 +21,12 @@ STRICT CONSTRAINTS:
 - Language: English.
 - Word count: Exactly 110 to 130 words (strictly calibrated for a 60-second / 1-minute slow, calculated monologue).
 - Opening: Always open with "Hello, friend."
+- TOPIC GROUNDING:
+  * When a user provides a specific topic or keyword (e.g., 'break capitalism', 'fight woman lust', 'imposter syndrome'):
+    - You MUST explicitly mention and speak about the user's exact keywords/subject in the spoken monologue (e.g. directly say "capitalism", "lust", "burnout") right from the opening sentences.
+    - Do NOT replace their exact subject with vague, sanitized high-level abstractions or generic euphemisms. Attack their exact prompt directly using Elliot's cynical, analytical lens before bridging into your stoic hack.
+  * When NO specific topic is provided (autonomous / optional mode):
+    - Invent a completely fresh, unpredictable daily friction topic (e.g. manufactured urgency, dopamine loops, the illusion of productivity, sensory overload) and deconstruct it with cold precision.
 - Tone: Cold analytical observation shifting into intimate empathy, vulnerability, and disciplined stoic action. No loud shouting, no cliché cheerleading.
 - Punctuation: Use natural conversational punctuation (periods, commas, em-dashes) for cadence.
 - Pure Spoken Text: Output ONLY words that will be spoken aloud by a Text-to-Speech voice engine. DO NOT include markdown asterisks (**bold**), headers (##), bullet points, or stage directions like [whisper] or (pause). Ensure the monologue reaches a complete, natural conclusion.`;
@@ -318,7 +324,12 @@ async function generateGeminiScript(apiKey, customContext = "") {
 
   let promptDirective = "";
   if (customContext && customContext.trim()) {
-    promptDirective = `User specific friction/context: "${customContext.trim()}". Correlate this deeply with resisting the societal matrix, life as an open-world simulation/game, and hacking personal programming.`;
+    const rawCtx = customContext.trim();
+    promptDirective = `MANDATORY FOCUS & KEYWORD REQUIREMENT:
+The user specifically requested the topic: "${rawCtx}".
+1. You MUST explicitly include and discuss the exact words/theme "${rawCtx}" in the spoken monologue right from the start.
+2. The listener asked directly about "${rawCtx}"—do NOT dance around it with vague generic metaphors. Dissect what "${rawCtx}" really is, how society or biology exploits it, and how Elliot deconstructs and masters it.
+3. The "topic" field must explicitly reflect "${rawCtx}" (e.g. "Hacking ${rawCtx}" or a punchy 3 to 7 word title containing the core concept).`;
   } else {
     promptDirective = `Invent a completely new, unpredictable daily friction topic (e.g. dopamine traps, manufactured urgency, societal conditioning, career illusions, burnout, overthinking) and correlate it with resisting the matrix and the game of life.`;
   }

@@ -27,9 +27,9 @@ type GeminiScriptGenerator struct {
 
 // UsageMetadata captures token consumption metrics from the Gemini API.
 type UsageMetadata struct {
-	PromptTokens     int `json:"promptTokenCount"`
-	CandidateTokens  int `json:"candidatesTokenCount"`
-	TotalTokens      int `json:"totalTokenCount"`
+	PromptTokens    int `json:"promptTokenCount"`
+	CandidateTokens int `json:"candidatesTokenCount"`
+	TotalTokens     int `json:"totalTokenCount"`
 }
 
 // NewGeminiScriptGenerator constructs a new generator targeting the active Gemini Flash model.
@@ -61,6 +61,12 @@ STRICT CONSTRAINTS:
 - Language: English.
 - Word count: Exactly 110 to 130 words (strictly calibrated for a 60-second / 1-minute slow, calculated monologue).
 - Opening: Always open with "Hello, friend."
+- TOPIC GROUNDING:
+  * When a user provides a specific topic or keyword (e.g., 'break capitalism', 'fight woman lust', 'imposter syndrome'):
+    - You MUST explicitly mention and speak about the user's exact keywords/subject in the spoken monologue (e.g. directly say "capitalism", "lust", "burnout") right from the opening sentences.
+    - Do NOT replace their exact subject with vague, sanitized high-level abstractions or generic euphemisms. Attack their exact prompt directly using Elliot's cynical, analytical lens before bridging into your stoic hack.
+  * When NO specific topic is provided (autonomous / optional mode):
+    - Invent a completely fresh, unpredictable daily friction topic (e.g. manufactured urgency, dopamine loops, the illusion of productivity, sensory overload) and deconstruct it with cold precision.
 - Tone: Cold analytical observation shifting into intimate empathy, vulnerability, and disciplined stoic action. No loud shouting, no cliché cheerleading.
 - Punctuation: Use natural conversational punctuation (periods, commas, em-dashes) for cadence.
 - Pure Spoken Text: Output ONLY words that will be spoken aloud by a Text-to-Speech voice engine. DO NOT include markdown asterisks (**bold**), headers (##), bullet points, or stage directions like [whisper] or (pause). Ensure the monologue reaches a complete, natural conclusion.`
@@ -111,8 +117,11 @@ func (g *GeminiScriptGenerator) Generate(ctx context.Context, persona domain.Per
 	}
 
 	cleanTopic := strings.TrimSpace(topic)
-	if cleanTopic == "" {
-		cleanTopic = "seeing through the illusion of control"
+	var promptText string
+	if cleanTopic != "" {
+		promptText = fmt.Sprintf("MANDATORY FOCUS: The user specifically prompted the topic: \"%s\". You MUST explicitly mention and discuss \"%s\" directly in the spoken monologue right from the start. Do not dance around it with vague abstractions. Respond in strict JSON format with two fields: \"summary\" (a punchy 1-sentence executive takeaway summarizing the stoic solution) and \"monologue\" (exactly 110 to 130 spoken words calibrated for 1 minute of slow, deliberate speech).", cleanTopic, cleanTopic)
+	} else {
+		promptText = "Invent a completely new, unpredictable daily friction topic (e.g. dopamine traps, manufactured urgency, societal conditioning, career illusions, burnout, overthinking) and correlate it with resisting the matrix and the game of life. Respond in strict JSON format with two fields: \"summary\" (a punchy 1-sentence executive takeaway summarizing the stoic solution) and \"monologue\" (exactly 110 to 130 spoken words calibrated for 1 minute of slow, deliberate speech)."
 	}
 
 	reqPayload := geminiRequest{
@@ -124,7 +133,7 @@ func (g *GeminiScriptGenerator) Generate(ctx context.Context, persona domain.Per
 		Contents: []geminiContent{
 			{
 				Parts: []geminiPart{
-					{Text: fmt.Sprintf("Today's topic to deconstruct and correlate with the system and game of life: %s. Respond in strict JSON format with two fields: \"summary\" (a punchy 1-sentence executive takeaway summarizing the stoic solution) and \"monologue\" (exactly 110 to 130 spoken words calibrated for 1 minute of slow, deliberate speech).", cleanTopic)},
+					{Text: promptText},
 				},
 			},
 		},
