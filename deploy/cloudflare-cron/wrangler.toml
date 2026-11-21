@@ -2,9 +2,12 @@ name = "personal-os-cron"
 main = "src/index.js"
 compatibility_date = "2024-01-01"
 
-# Trigger twice daily: at 23:00 and 11:00 UTC (06:00 and 18:00 WIB)
+# Trigger twice daily: at 23:00 UTC (06:00 WIB) and 11:00 UTC (18:00 WIB)
 [triggers]
-crons = ["0 11,23 * * *"]
+crons = [
+  "0 23 * * *",
+  "0 11 * * *"
+]
 
 # Environment variables needed (set these in Cloudflare Dashboard or .dev.vars)
 # GEMINI_API_KEY = "..."

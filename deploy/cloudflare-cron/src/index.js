@@ -28,7 +28,19 @@ STRICT CONSTRAINTS:
 export default {
   // Cron handler: triggered twice daily at 06:00 & 18:00 WIB (23:00 & 11:00 UTC)
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(executePipeline(env));
+    console.log(`⏰ Scheduled cron triggered at ${new Date().toISOString()} (cron: "${event.cron}")`);
+    ctx.waitUntil(
+      executePipeline(env).catch(async (err) => {
+        console.error("Scheduled cron pipeline failed:", err);
+        if (env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID) {
+          await sendTelegramText(
+            env.TELEGRAM_BOT_TOKEN,
+            env.TELEGRAM_CHAT_ID,
+            `⚠️ *Personal OS Cron Trigger Failed:*\n\`${err.message}\``
+          );
+        }
+      })
+    );
   },
 
   // HTTP handler: webhooks, manual triggers, status, and setup
@@ -170,7 +182,7 @@ export default {
     const diagnostics = {
       service: "Personal OS 24/7 Audio Motivation Engine",
       status: "ACTIVE",
-      cronSchedule: "Twice daily (0 11,23 * * *) [06:00 & 18:00 WIB]",
+      cronSchedule: "Twice daily: 06:00 & 18:00 WIB (UTC: 0 23 * * *, 0 11 * * *)",
       webhookUrl: `${url.origin}/webhook`,
       oneClickWebhookSetup: `${url.origin}/set-webhook`,
       manualTrigger: `${url.origin}/trigger`,
@@ -242,6 +254,9 @@ async function executePipeline(env, customTopic = null, targetChatId = null) {
         event_id: qData.event_id,
         mode: "cloud_async_queue"
       };
+    } else {
+      const errText = await queueResp.text().catch(() => "");
+      console.warn(`Hugging Face queue returned HTTP ${queueResp.status}: ${errText}. Attempting fallback...`);
     }
   } catch (err) {
     console.warn("Could not dispatch to async queue, attempting fallback:", err.message);
