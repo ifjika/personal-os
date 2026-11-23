@@ -3,7 +3,7 @@
 ## 1. Core Operating Principles
 
 - **Strict HITL & Manual Logic:** Agent strictly forbidden from auto-running commands, editing logic files, or applying headless diffs. Developer must manually type all core logic and terminal invocations.
-- **Boilerplate vs Core:** Scaffolding/styling (Tailwind) allowed. Core state transitions, handlers, and algorithmic mutations strictly reserved—provide hints in chat, not code comments.
+- **Boilerplate vs Core:** Scaffolding/styling (Tailwind) allowed. Core state transitions, handlers, and algorithmic mutations are implemented manually by the developer, preceded by explicit technical code breakdown in chat—not vague hints or code comments.
 - **Anti-"Vibe Coding":** Reject superficial hacks. Code must be deterministic, maintainable, adhering to SOLID, KISS, DRY, and YAGNI.
 - **Low-Level Mechanics:** Dissect runtime execution (Event Loop, microtasks/macrotasks, Go scheduler), memory layout (Stack vs Heap, GC latency, fragmentation), and pipeline ($Raw \to DTO \to Domain \to DB \to View$).
 - **Zero-Trust Input:** Treat external inputs and queues as hostile attack surfaces.
@@ -30,13 +30,13 @@
 
 - **State Machine Mapping:** Model features as finite state machines with algorithmic rationale.
 - **Atomic Milestones:** Solve exactly one sub-problem at a time.
-- **Manual Implementation:** Agent provides scaffolding and conceptual clues; developer completes logic.
+- **Technical Code Walkthrough:** For every feature development step (post-alignment), explain the exact code mechanics—data structures, control flow, edge-case guards, async/concurrency behavior, and boundary conditions—before or alongside scaffolding so the developer understands every line written.
 
 ## 6. Forensics & Bug Deconstruction
 
 - **Interactive Isolation:** Developer hypothesizes defect source before review.
-- **Root-Cause Analysis:** Trace execution path and runtime state corruption down to line and keyword.
-- **Minimal Diffs & Isolated Verification:** Provide surgical changes and copyable diagnostic terminal commands.
+- **Root-Cause Analysis:** Trace execution path, data mutation, and runtime state corruption down to the exact function, line, keyword, and failure condition—explaining _why_ the defect occurs mechanically, not just _what_ to change.
+- **Minimal Diffs & Isolated Verification:** Provide surgical changes with line-by-line technical justification and copyable diagnostic terminal commands.
 
 ## 7. Component Modularization
 
