@@ -1,11 +1,11 @@
 /**
  * Personal OS: 24/7 Automated Motivation Engine (Cloudflare Worker Entrypoint)
  *
- * Schedule: Twice daily at 06:00 & 18:00 WIB (UTC: "0 23 * * *" & "0 11 * * *").
+ * Schedule: Every 6 hours WIB — 00:00, 06:00, 12:00, 18:00 WIB (UTC: "0 5,11,17,23 * * *").
  * Architecture: Entrypoint -> Services (Pipeline, Gemini, Telegram, Diagnostics) -> Prompts.
  */
-import { executePipeline } from "./services/pipeline.js";
 import { runHealthDiagnostics } from "./services/diagnostics.js";
+import { executePipeline } from "./services/pipeline.js";
 import { handleTelegramWebhook, registerTelegramWebhook, sendTelegramText } from "./services/telegram.js";
 
 export default {
@@ -68,7 +68,7 @@ export default {
     const diagnostics = {
       service: "Personal OS 24/7 Audio Motivation Engine",
       status: "ACTIVE",
-      cronSchedule: "Twice daily: 06:00 & 18:00 WIB (UTC: 0 23 * * *, 0 11 * * *)",
+      cronSchedule: "Every 6 hours WIB: 00:00, 06:00, 12:00, 18:00 WIB (UTC: 0 5,11,17,23 * * *)",
       webhookUrl: `${url.origin}/webhook`,
       oneClickWebhookSetup: `${url.origin}/set-webhook`,
       manualTrigger: `${url.origin}/trigger`,

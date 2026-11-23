@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **24/7 Automated $0 Cloud Pipeline (Cloudflare Cron + Hugging Face F5-TTS + Telegram):**
-  - **Full Automation Schedule:** Cloudflare Workers Cron Trigger firing twice daily (`0 11,23 * * *`), broadcasting at 06:00 WIB (morning motivation) & 18:00 WIB (evening reflection).
+  - **Full Automation Schedule:** Cloudflare Workers Cron Trigger firing every 6 hours WIB (`0 5,11,17,23 * * *`), broadcasting at 00:00, 06:00, 12:00, and 18:00 WIB.
   - **Asynchronous Cloud Queue Integration:** Solved the Cloudflare Workers Free Tier 30-second execution kill by dispatching jobs to Hugging Face Spaces' native Gradio Queue (`POST /gradio_api/call/synthesize_voice`) in <200ms. Hugging Face synthesizes the full 1-minute audio and dispatches directly to Telegram Bot API with zero timeout constraints.
   - **Interactive Telegram Bot Webhook:** Integrated `/webhook` receiver enabling on-demand audio generation via `/generate` or custom topic input (`/generate <topic>`).
   - **Native Telegram Command Menu:** Registered Telegram `setMyCommands` and `setChatMenuButton`, rendering native auto-complete recommendations and the blue `[Menu]` button.

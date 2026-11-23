@@ -18,7 +18,7 @@
 | **Phase 2** | **Core Orchestrator & Chunker**        | Go domain boundaries, boundary chunker (120–280 chars), prompt generator, SQLite storage.              | `IN_PROGRESS` ⏳ | `v0.2.0-alpha` |
 | **Phase 3** | **Audio Post-Processing & TTS Client** | FFmpeg 250ms crossfade, EBU R128 mastering, Hugging Face 24/7 F5-TTS cloud deployment.                 | `COMPLETED` ✅   | `v0.2.0-alpha` |
 | **Phase 4** | **Web Studio & Telemetry**             | Terminal Noir UI (Next.js/Tailwind), canvas waveform visualizer, SSE log streamer.                     | `PENDING` 📋     | `v0.5.0-alpha` |
-| **Phase 5** | **Automation & Dispatch**              | 12-hour Cloudflare Cron trigger, Telegram Bot audio dispatcher, mobile delivery, dynamic topics.        | `COMPLETED` ✅   | `v0.4.0` |
+| **Phase 5** | **Automation & Dispatch**              | 6-hourly Cloudflare Cron trigger, Telegram Bot audio dispatcher, mobile delivery, dynamic topics.        | `COMPLETED` ✅   | `v0.4.0` |
 
 ---
 
@@ -67,7 +67,7 @@ The following components have been implemented, tested, and verified:
    - Implemented `TelegramDispatcher` streaming audio files via `multipart/form-data` to Telegram Bot API (`/sendAudio`).
    - Verified 100% PASS with unit test suite (`telegram_test.go`).
 8. **24/7 Cloudflare Worker Cron Automation (`deploy/cloudflare-cron`):**
-   - Automated serverless cron worker scheduled twice daily (`0 11,23 * * *`) firing at 06:00 & 18:00 WIB (23:00 & 11:00 UTC).
+   - Automated serverless cron worker scheduled every 6 hours WIB (`0 5,11,17,23 * * *`) firing at 00:00, 06:00, 12:00 & 18:00 WIB (17:00, 23:00, 05:00 & 11:00 UTC).
    - Interactive Telegram bot webhook receiver (`POST /webhook`) supporting `/generate` on-demand and free-form topic input.
    - Native Telegram autocomplete command menu (`setMyCommands`) and blue `[Menu]` button registration (`/set-webhook`).
    - 100% Dynamic Topic Generation via Gemini Flash, eliminating static topic lists entirely.

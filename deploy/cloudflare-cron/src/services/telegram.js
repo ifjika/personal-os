@@ -1,13 +1,30 @@
 import { executePipeline } from "./pipeline.js";
 import { runHealthDiagnostics } from "./diagnostics.js";
 
+function escapeMarkdown(str) {
+  return String(str || "").replace(/([_*`\[])/g, "\\$1");
+}
+
 export async function sendTelegramText(botToken, chatId, text, parseMode = "Markdown") {
   const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-  return await fetch(url, {
+  const payload = parseMode ? { chat_id: chatId, text, parse_mode: parseMode } : { chat_id: chatId, text };
+  const resp = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: parseMode })
+    body: JSON.stringify(payload)
   });
+
+  // Fallback to plain text if Telegram rejects Markdown entities (e.g. unescaped underscores)
+  if (!resp.ok && parseMode) {
+    console.warn(`Telegram Markdown send failed (HTTP ${resp.status}), retrying as plain text...`);
+    return await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text })
+    });
+  }
+
+  return resp;
 }
 
 export async function sendTelegramChatAction(botToken, chatId, action = "record_voice") {
@@ -73,7 +90,7 @@ export async function handleTelegramWebhook(request, env, ctx) {
         `  _Example:_ \`/generate conquering imposter syndrome\`\n` +
         `• \`/ping\` — Live health check (Gemini, Hugging Face & Bot)\n` +
         `• \`/status\` — View configuration & schedule\n\n` +
-        `_Automated Schedule: Twice daily at 06:00 & 18:00 WIB._`;
+        `_Automated Schedule: Every 6 hours (00:00, 06:00, 12:00, 18:00 WIB)._`;
       await sendTelegramText(env.TELEGRAM_BOT_TOKEN, chatId, helpMsg);
       return new Response("OK", { status: 200 });
     }
@@ -81,7 +98,7 @@ export async function handleTelegramWebhook(request, env, ctx) {
     if (text === "/status") {
       const statusMsg = `⚙️ *Personal OS Cloud Config*\n\n` +
         `• *Orchestrator:* Cloudflare Workers (Serverless)\n` +
-        `• *Schedule:* Twice daily at 06:00 & 18:00 WIB\n` +
+        `• *Schedule:* Every 6 hours (00:00, 06:00, 12:00, 18:00 WIB)\n` +
         `• *TTS Backend:* Hugging Face Spaces (F5-TTS)\n` +
         `• *LLM Engine:* Google Gemini Flash\n` +
         `• *Persona:* Elliot Alderson\n\n` +
@@ -97,12 +114,12 @@ export async function handleTelegramWebhook(request, env, ctx) {
           .then(async (diag) => {
             const reportMsg =
               `📡 *Personal OS — Live Ping Report*\n\n` +
-              `• *Cloudflare Worker:* ${diag.cloudflare}\n` +
-              `• *Env Secrets:* ${diag.secrets}\n` +
-              `• *Google Gemini AI:* ${diag.gemini}\n` +
-              `• *Hugging Face TTS:* ${diag.huggingface}\n` +
-              `• *Telegram Bot API:* ${diag.telegram}\n\n` +
-              `*Summary:* ${diag.summary}\n` +
+              `• *Cloudflare Worker:* ${escapeMarkdown(diag.cloudflare)}\n` +
+              `• *Env Secrets:* ${escapeMarkdown(diag.secrets)}\n` +
+              `• *Google Gemini AI:* ${escapeMarkdown(diag.gemini)}\n` +
+              `• *Hugging Face TTS:* ${escapeMarkdown(diag.huggingface)}\n` +
+              `• *Telegram Bot API:* ${escapeMarkdown(diag.telegram)}\n\n` +
+              `*Summary:* ${escapeMarkdown(diag.summary)}\n` +
               `_Checked at: ${diag.checkedAtWib} WIB_`;
             await sendTelegramText(env.TELEGRAM_BOT_TOKEN, chatId, reportMsg);
           })
