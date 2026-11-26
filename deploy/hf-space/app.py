@@ -8,6 +8,7 @@ import time
 import tempfile
 import urllib.request
 import urllib.parse
+import urllib.error
 import gradio as gr
 from f5_tts.api import F5TTS
 
@@ -73,6 +74,22 @@ def synthesize_voice(
     elapsed_sec = time.time() - start_time
     print(f"🎉 Speech synthesis complete in {elapsed_sec:.1f}s!")
 
+def _escape_md(text: str) -> str:
+    for ch in ("_", "*", "`", "["):
+        text = text.replace(ch, "\\" + ch)
+    return text
+
+def _build_multipart(fields: dict, audio_bytes: bytes, filename: str, boundary: str) -> bytes:
+    parts = []
+    for k, v in fields.items():
+        parts.append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"{k}\"\r\n\r\n{v}\r\n".encode("utf-8"))
+    parts.append(
+        f"--{boundary}\r\nContent-Disposition: form-data; name=\"audio\"; filename=\"{filename}\"\r\nContent-Type: audio/wav\r\n\r\n".encode("utf-8")
+        + audio_bytes
+        + f"\r\n--{boundary}--\r\n".encode("utf-8")
+    )
+    return b"".join(parts)
+
     # Direct Telegram dispatch if credentials are provided by caller
     if chat_id and tg_token:
         try:
@@ -85,30 +102,44 @@ def synthesize_voice(
 
             caption = (
                 f"🎙️ *Personal OS — Motivation Engine*\n\n"
-                f"📌 *Topic:* _{resolved_topic}_\n"
-                f"📝 *Summary:* _{resolved_summary}_\n"
+                f"📌 *Topic:* _{_escape_md(resolved_topic)}_\n"
+                f"📝 *Summary:* _{_escape_md(resolved_summary)}_\n"
                 f"⏱️ *Process Time:* {elapsed_sec:.1f}s\n"
                 f"{token_line}\n"
                 f"_\"Hello, friend...\"_"
             )
 
-            boundary = "----PersonalOSBoundary" + os.urandom(8).hex()
             with open(out_path, "rb") as f:
                 audio_bytes = f.read()
 
-            body = (
-                f"--{boundary}\r\nContent-Disposition: form-data; name=\"chat_id\"\r\n\r\n{chat_id}\r\n"
-                f"--{boundary}\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\nMotivation: {resolved_topic}\r\n"
-                f"--{boundary}\r\nContent-Disposition: form-data; name=\"performer\"\r\n\r\nElliot Alderson\r\n"
-                f"--{boundary}\r\nContent-Disposition: form-data; name=\"caption\"\r\n\r\n{caption}\r\n"
-                f"--{boundary}\r\nContent-Disposition: form-data; name=\"parse_mode\"\r\n\r\nMarkdown\r\n"
-                f"--{boundary}\r\nContent-Disposition: form-data; name=\"audio\"; filename=\"daily_{int(time.time())}.wav\"\r\nContent-Type: audio/wav\r\n\r\n"
-            ).encode("utf-8") + audio_bytes + f"\r\n--{boundary}--\r\n".encode("utf-8")
-
+            boundary = "----PersonalOSBoundary" + os.urandom(8).hex()
+            filename = f"daily_{int(time.time())}.wav"
+            fields = {
+                "chat_id": chat_id,
+                "title": f"Motivation: {resolved_topic}",
+                "performer": "Elliot Alderson",
+                "caption": caption,
+                "parse_mode": "Markdown",
+            }
             tg_url = f"https://api.telegram.org/bot{tg_token}/sendAudio"
-            tg_req = urllib.request.Request(tg_url, data=body, headers={"Content-Type": f"multipart/form-data; boundary={boundary}"})
-            with urllib.request.urlopen(tg_req, timeout=60) as tg_resp:
-                print(f"📲 Telegram delivery complete! Status: {tg_resp.status} (Total time: {elapsed_sec:.1f}s)")
+
+            try:
+                body = _build_multipart(fields, audio_bytes, filename, boundary)
+                tg_req = urllib.request.Request(tg_url, data=body, headers={"Content-Type": f"multipart/form-data; boundary={boundary}"})
+                with urllib.request.urlopen(tg_req, timeout=60) as tg_resp:
+                    print(f"📲 Telegram delivery complete! Status: {tg_resp.status} (Total time: {elapsed_sec:.1f}s)")
+            except urllib.error.HTTPError as http_err:
+                # Fallback to plain text caption if Telegram rejects Markdown
+                if http_err.code == 400:
+                    print(f"⚠️ Telegram Markdown rejected (400), retrying plain text caption...")
+                    fields.pop("parse_mode", None)
+                    fields["caption"] = f"🎙️ Personal OS — Motivation Engine\n\nTopic: {resolved_topic}\nSummary: {resolved_summary}\nProcess Time: {elapsed_sec:.1f}s\n\n\"Hello, friend...\""
+                    body = _build_multipart(fields, audio_bytes, filename, boundary)
+                    tg_req = urllib.request.Request(tg_url, data=body, headers={"Content-Type": f"multipart/form-data; boundary={boundary}"})
+                    with urllib.request.urlopen(tg_req, timeout=60) as tg_resp:
+                        print(f"📲 Telegram plain fallback complete! Status: {tg_resp.status}")
+                else:
+                    raise
 
         except Exception as tg_err:
             print(f"❌ Telegram delivery failed: {tg_err}")

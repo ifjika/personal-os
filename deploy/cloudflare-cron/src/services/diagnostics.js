@@ -95,3 +95,71 @@ export async function runHealthDiagnostics(env) {
     checkedAtWib: wibTime
   };
 }
+
+/**
+ * Wakes up a sleeping or paused Hugging Face Space using Official Hub API (if HF_TOKEN is set)
+ * or falls back to an HTML root warm-up request.
+ */
+export async function wakeHuggingFaceSpace(env) {
+  const ttsUrl = (env.TTS_URL || DEFAULT_TTS_URL).replace(/\/+$/, "");
+  const spaceId = env.HF_SPACE_ID || "ifjika/personal-os";
+  const hfToken = env.HF_TOKEN;
+
+  if (hfToken) {
+    try {
+      const resp = await fetch(`https://huggingface.co/api/spaces/${spaceId}/restart`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${hfToken}`,
+          "Content-Type": "application/json"
+        },
+        signal: AbortSignal.timeout(8000)
+      });
+
+      if (resp.ok) {
+        return {
+          ok: true,
+          method: "Official Hub Restart API",
+          message: "Wake-up/restart triggered! Wait ~30–60s for F5-TTS to load, then check /ping."
+        };
+      }
+      const errText = await resp.text().catch(() => "");
+      return {
+        ok: false,
+        method: "Official Hub Restart API",
+        message: `HTTP ${resp.status}: ${errText.slice(0, 120)}`
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        method: "Official Hub Restart API",
+        message: err.message
+      };
+    }
+  }
+
+  try {
+    const resp = await fetch(ttsUrl, {
+      headers: { Accept: "text/html" },
+      signal: AbortSignal.timeout(10000)
+    });
+    if (resp.ok) {
+      return {
+        ok: true,
+        method: "HTML Warm-Up Ping",
+        message: "Space responded 200 OK and is already awake!"
+      };
+    }
+    return {
+      ok: true,
+      method: "HTML Warm-Up Ping",
+      message: `Wake signal sent (HTTP ${resp.status}). Wait ~30–60s then check /ping. Tip: set HF_TOKEN secret for guaranteed hard-restart.`
+    };
+  } catch (err) {
+    return {
+      ok: err.name === "TimeoutError" || err.name === "AbortError",
+      method: "HTML Warm-Up Ping",
+      message: `Space is booting or unreachable (${err.message}). Check /ping in ~45s.`
+    };
+  }
+}

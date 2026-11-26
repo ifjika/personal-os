@@ -1,10 +1,10 @@
 /**
  * Personal OS: 24/7 Automated Motivation Engine (Cloudflare Worker Entrypoint)
  *
- * Schedule: Every 6 hours WIB — 00:00, 06:00, 12:00, 18:00 WIB (UTC: "0 5,11,17,23 * * *").
+ * Schedule: Every 3 hours WIB — 00:00, 03:00, 06:00, 09:00, 12:00, 15:00, 18:00, 21:00 WIB (UTC: "0 2,5,8,11,14,17,20,23 * * *").
  * Architecture: Entrypoint -> Services (Pipeline, Gemini, Telegram, Diagnostics) -> Prompts.
  */
-import { runHealthDiagnostics } from "./services/diagnostics.js";
+import { runHealthDiagnostics, wakeHuggingFaceSpace } from "./services/diagnostics.js";
 import { executePipeline } from "./services/pipeline.js";
 import { handleTelegramWebhook, registerTelegramWebhook, sendTelegramText } from "./services/telegram.js";
 
@@ -65,14 +65,23 @@ export default {
       });
     }
 
+    if (url.pathname === "/wake") {
+      const res = await wakeHuggingFaceSpace(env);
+      return new Response(JSON.stringify(res, null, 2), {
+        status: res.ok ? 200 : 502,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+
     const diagnostics = {
       service: "Personal OS 24/7 Audio Motivation Engine",
       status: "ACTIVE",
-      cronSchedule: "Every 6 hours WIB: 00:00, 06:00, 12:00, 18:00 WIB (UTC: 0 5,11,17,23 * * *)",
+      cronSchedule: "Every 3 hours WIB: 00:00, 03:00, 06:00, 09:00, 12:00, 15:00, 18:00, 21:00 WIB (UTC: 0 2,5,8,11,14,17,20,23 * * *)",
       webhookUrl: `${url.origin}/webhook`,
       oneClickWebhookSetup: `${url.origin}/set-webhook`,
       manualTrigger: `${url.origin}/trigger`,
       livePing: `${url.origin}/ping`,
+      wakeSpace: `${url.origin}/wake`,
       ttsEndpoint: env.TTS_URL || "https://ifjika-personal-os.hf.space",
       envStatus: {
         GEMINI_API_KEY: env.GEMINI_API_KEY ? "CONFIGURED (OK)" : "MISSING (Run: npx wrangler secret put GEMINI_API_KEY)",

@@ -141,22 +141,26 @@ func (g *GeminiScriptGenerator) Generate(ctx context.Context, persona domain.Per
 	reqPayload.GenerationConfig.Temperature = 0.85
 	reqPayload.GenerationConfig.MaxOutputTokens = 900
 	reqPayload.GenerationConfig.ResponseMimeType = "application/json"
-	reqPayload.GenerationConfig.ThinkingConfig = &struct {
-		ThinkingBudget int `json:"thinkingBudget"`
-	}{
-		ThinkingBudget: 0, // Direct text output without burning token budget on hidden reasoning
-	}
 
-	bodyBytes, err := json.Marshal(reqPayload)
-	if err != nil {
-		return "", fmt.Errorf("failed to encode Gemini payload: %w", err)
-	}
-
-	// Model candidate list with automatic fallback in case of Google model deprecation
+	// Model candidate list with automatic fallback on 404 or transient 429/5xx load spikes
 	candidateModels := []string{g.Model, "gemini-3-flash-preview", "gemini-flash-latest"}
 	var lastErr error
 
 	for _, modelName := range candidateModels {
+		if !strings.Contains(modelName, "lite") {
+			reqPayload.GenerationConfig.ThinkingConfig = &struct {
+				ThinkingBudget int `json:"thinkingBudget"`
+			}{
+				ThinkingBudget: 0,
+			}
+		} else {
+			reqPayload.GenerationConfig.ThinkingConfig = nil
+		}
+
+		bodyBytes, err := json.Marshal(reqPayload)
+		if err != nil {
+			return "", fmt.Errorf("failed to encode Gemini payload: %w", err)
+		}
 		endpoint := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s", modelName, g.APIKey)
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewBuffer(bodyBytes))
 		if err != nil {
@@ -178,8 +182,9 @@ func (g *GeminiScriptGenerator) Generate(ctx context.Context, persona domain.Per
 			continue
 		}
 
-		if resp.StatusCode == http.StatusNotFound {
-			lastErr = fmt.Errorf("model %s not found (404), trying fallback", modelName)
+		if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500 {
+			lastErr = fmt.Errorf("model %s returned HTTP %d, trying fallback", modelName, resp.StatusCode)
+			time.Sleep(1200 * time.Millisecond)
 			continue
 		}
 

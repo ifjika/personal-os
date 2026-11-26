@@ -1,6 +1,7 @@
 import { ELLIOT_SYSTEM_INSTRUCTION, buildGeminiPrompt } from "../prompts/elliot.js";
 
 const GEMINI_MODELS = ["gemini-3-flash-preview", "gemini-flash-latest"];
+const TRANSIENT_STATUS_CODES = new Set([404, 429, 500, 502, 503, 504]);
 
 function sanitizeSpeechText(text) {
   return (text || "").replace(/[*#_\[\]\(\)]+/g, "").replace(/\s+/g, " ").trim();
@@ -34,25 +35,41 @@ export async function generateGeminiScript(apiKey, customContext = "") {
 
   for (const model of GEMINI_MODELS) {
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const generationConfig = {
+      temperature: 0.90,
+      maxOutputTokens: 950,
+      responseMimeType: "application/json"
+    };
+    // Lite models do not support thinkingConfig and reject it with HTTP 400 INVALID_ARGUMENT
+    if (!model.includes("lite")) {
+      generationConfig.thinkingConfig = { thinkingBudget: 0 };
+    }
+
     const payload = {
       systemInstruction: { parts: [{ text: ELLIOT_SYSTEM_INSTRUCTION }] },
       contents: [{ parts: [{ text: promptText }] }],
-      generationConfig: {
-        temperature: 0.90,
-        maxOutputTokens: 950,
-        responseMimeType: "application/json",
-        thinkingConfig: { thinkingBudget: 0 }
-      }
+      generationConfig
     };
 
-    const resp = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+    let resp;
+    try {
+      resp = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(8000)
+      });
+    } catch (err) {
+      lastError = new Error(`Model ${model} network/timeout error: ${err.message}`);
+      console.warn(`Gemini ${model} failed (${err.message}), falling back to next model...`);
+      continue;
+    }
 
-    if (resp.status === 404) {
-      lastError = new Error(`Model ${model} returned 404`);
+    if (TRANSIENT_STATUS_CODES.has(resp.status)) {
+      const errText = await resp.text().catch(() => "");
+      lastError = new Error(`Model ${model} returned HTTP ${resp.status}: ${errText}`);
+      console.warn(`Gemini ${model} transient error (${resp.status}), falling back to next model...`);
+      await new Promise((r) => setTimeout(r, 1200));
       continue;
     }
 
