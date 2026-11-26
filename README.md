@@ -3,7 +3,7 @@
 > _"Hello, friend. It's happening again. They have us convinced that if we stop moving, we stop existing..."_
 
 [![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat&logo=go)](https://go.dev/)
-[![Version](https://img.shields.io/badge/Version-v0.4.0-brightgreen)](docs/CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-v0.4.1-brightgreen)](documentation/CHANGELOG.md)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Telegram Bot](https://img.shields.io/badge/Telegram-Bot%20API-2CA5E0?logo=telegram)](https://core.telegram.org/bots/api)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Serverless%20Cron-F38020?logo=cloudflare)](https://workers.cloudflare.com/)
@@ -70,18 +70,20 @@ Every delivery arrives cleanly formatted with actionable metadata:
 | `/generate`            | Generates a fresh audio on a novel, dynamically generated stoic topic.                   |
 | `/generate <topic>`    | Generates a targeted audio around your chosen topic (e.g., `/generate burnout`).         |
 | _`<any text message>`_ | Send any raw thought or vent; the engine deconstructs it into a 1-minute audio response. |
-| `/status`              | Checks engine uptime, AI health, and schedule information.                               |
+| `/ping`                | Runs live health diagnostics across Cloudflare, Gemini AI, Hugging Face TTS & Bot API.   |
+| `/wake`                | Wakes up or restarts a sleeping Hugging Face TTS Space remotely from Telegram.           |
+| `/status`              | Checks engine configuration and automated schedule information.                          |
 
 ---
 
 ## ⏰ Delivery Protocol (Every 6 Hours WIB)
 
-| Time Window | Jakarta Time (WIB) | Mindset Objective |
-| :--- | :--- | :--- |
-| **Morning** | **06:00 • 09:00 WIB** | Calibrate mental clarity and strip manufactured urgency before & during morning focus. |
-| **Afternoon** | **12:00 • 15:00 WIB** | Cut through midday noise, fatigue, and meetings to regain deliberate focus. |
-| **Evening** | **18:00 • 21:00 WIB** | Mental debrief, disconnect from the loop, and reclaim quiet autonomy. |
-| **Night** | **00:00 • 03:00 WIB** | Strip artificial weight and quiet the mind. |
+| Time Window   | Jakarta Time (WIB)    | Mindset Objective                                                                      |
+| :------------ | :-------------------- | :------------------------------------------------------------------------------------- |
+| **Morning**   | **06:00 • 09:00 WIB** | Calibrate mental clarity and strip manufactured urgency before & during morning focus. |
+| **Afternoon** | **12:00 • 15:00 WIB** | Cut through midday noise, fatigue, and meetings to regain deliberate focus.            |
+| **Evening**   | **18:00 • 21:00 WIB** | Mental debrief, disconnect from the loop, and reclaim quiet autonomy.                  |
+| **Night**     | **00:00 • 03:00 WIB** | Strip artificial weight and quiet the mind.                                            |
 
 _(Need a mental reset anytime? Send `/generate`, `/ping` for live status, or `/wake` to wake up the TTS Space)._
 
@@ -91,10 +93,10 @@ _(Need a mental reset anytime? Send `/generate`, `/ping` for live status, or `/w
 
 For engineers interested in the implementation details, deep-dive into our modular architecture and code:
 
-- 🏛️ **[Architecture & Data Flow](docs/ARCHITECTURE.md)** — In-depth breakdown of Go concurrency, FFmpeg mastering, and async queues.
-- 📋 **[Product Requirements (PRD)](docs/PRD.md)** — Acoustic guidelines, word pacing, and target specifications.
-- 🗺️ **[Implementation Roadmap](docs/IMPLEMENTATION_PLAN.md)** — Completed phases, milestones, and system checklist.
-- 📜 **[Version Changelog](docs/CHANGELOG.md)** — Semantic version history and release notes.
+- 🏛️ **[Architecture & Data Flow](documentation/ARCHITECTURE.md)** — In-depth breakdown of Go concurrency, FFmpeg mastering, and async queues.
+- 📋 **[Product Requirements (PRD)](documentation/PRD.md)** — Acoustic guidelines, word pacing, and target specifications.
+- 🗺️ **[Implementation Roadmap](documentation/IMPLEMENTATION_PLAN.md)** — Completed phases, milestones, and system checklist.
+- 📜 **[Version Changelog](documentation/CHANGELOG.md)** — Semantic version history and release notes.
 
 ---
 

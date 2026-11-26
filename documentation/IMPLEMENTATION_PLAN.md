@@ -2,7 +2,7 @@
 
 ## Personal OS: AI Audio Motivation Engine
 
-**Current Version:** `v0.4.0` (Live Production)  
+**Current Version:** `v0.4.1` (Live Production)  
 **Last Updated:** `2026-11-21`
 
 > **Operational Directive:**
@@ -18,7 +18,7 @@
 | **Phase 2** | **Core Orchestrator & Chunker**        | Go domain boundaries, boundary chunker (120–280 chars), prompt generator, SQLite storage.              | `IN_PROGRESS` ⏳ | `v0.2.0-alpha` |
 | **Phase 3** | **Audio Post-Processing & TTS Client** | FFmpeg 250ms crossfade, EBU R128 mastering, Hugging Face 24/7 F5-TTS cloud deployment.                 | `COMPLETED` ✅   | `v0.2.0-alpha` |
 | **Phase 4** | **Web Studio & Telemetry**             | Terminal Noir UI (Next.js/Tailwind), canvas waveform visualizer, SSE log streamer.                     | `PENDING` 📋     | `v0.5.0-alpha` |
-| **Phase 5** | **Automation & Dispatch**              | 3-hourly Cloudflare Cron trigger, Telegram Bot audio dispatcher, mobile delivery, dynamic topics.        | `COMPLETED` ✅   | `v0.4.0` |
+| **Phase 5** | **Automation & Dispatch**              | 3-hourly Cloudflare Cron trigger, Telegram Bot audio dispatcher, mobile delivery, dynamic topics.      | `COMPLETED` ✅   | `v0.4.1`       |
 
 ---
 
@@ -68,9 +68,10 @@ The following components have been implemented, tested, and verified:
    - Verified 100% PASS with unit test suite (`telegram_test.go`).
 8. **24/7 Cloudflare Worker Cron Automation (`deploy/cloudflare-cron`):**
    - Automated serverless cron worker scheduled every 3 hours WIB (`0 2,5,8,11,14,17,20,23 * * *`) firing at 00:00, 03:00, 06:00, 09:00, 12:00, 15:00, 18:00 & 21:00 WIB.
-   - Interactive Telegram bot webhook receiver (`POST /webhook`) supporting `/generate` on-demand and free-form topic input.
+   - Modularized Cloudflare Worker architecture (`index.js`, `prompts/elliot.js`, `services/gemini.js`, `services/pipeline.js`, `services/diagnostics.js`, `services/telegram.js`).
+   - Interactive Telegram bot webhook receiver (`POST /webhook`) supporting `/generate` (optional topic), `/ping` (live diagnostics), `/wake` (hybrid HF Space wake-up via `HF_TOKEN`), and `/status`.
    - Native Telegram autocomplete command menu (`setMyCommands`) and blue `[Menu]` button registration (`/set-webhook`).
    - 100% Dynamic Topic Generation via Gemini Flash, eliminating static topic lists entirely.
    - Real-time telemetry in Telegram captions: **Topic**, **1-sentence Executive Summary**, **Process Time**, and **Token Counts**.
-    - Successfully deployed to Hugging Face Spaces (CPU 16GB RAM) running **F5-TTS**.
-    - Dual interface: Web GUI (Gradio) + REST API endpoint (`POST /v1/tts`).
+   - Successfully deployed to Hugging Face Spaces (CPU 16GB RAM) running **F5-TTS**.
+   - Dual interface: Web GUI (Gradio) + REST API endpoint (`POST /v1/tts`).

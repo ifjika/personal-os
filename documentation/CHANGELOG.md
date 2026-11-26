@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v0.4.1] - 2026-11-26 (Resilience & Modularity Update)
+
+### Added
+
+- **Live Diagnostics & Remote Recovery Commands (`/ping` & `/wake`):**
+  - Added `/ping` (Telegram & `GET /ping`) running parallel live health probes across Worker secrets, Google Gemini API, Hugging Face Gradio `/gradio_api/info`, and Telegram Bot `/getMe` with millisecond latency telemetry.
+  - Added `/wake` (Telegram & `GET /wake`) with Hybrid Space Wake-Up: uses Official Hugging Face Hub Restart API (`POST /api/spaces/{id}/restart` via `HF_TOKEN` secret) or falls back to HTML root warm-up ping.
+- **3-Hour Automated WIB Schedule:**
+  - Updated Cloudflare Cron Trigger to `0 2,5,8,11,14,17,20,23 * * *` (broadcasting every 3 hours at `00:00, 03:00, 06:00, 09:00, 12:00, 15:00, 18:00, 21:00 WIB`), keeping Hugging Face Space warm well within its 48-hour sleep window.
+
+### Changed & Fixed
+
+- **Layered Modular Refactor (`deploy/cloudflare-cron/src/`):**
+  - Decomposed the 808-LOC monolith `index.js` into 6 clean ES Modules under 180 LOC each: `index.js`, `prompts/elliot.js`, `services/gemini.js`, `services/pipeline.js`, `services/diagnostics.js`, and `services/telegram.js`.
+  - Purged ~241 LOC of legacy dead chunking/WAV-stitching code.
+- **Prompt Topic Grounding & Resilience:**
+  - Enforced mandatory keyword grounding in Elliot's system prompt so user-specified topics are addressed explicitly instead of abstracted away.
+  - Added transient HTTP `503`/`429`/timeout fallback in `gemini.js` & `gemini.go`, 3-attempt cold-start retry in `pipeline.js`, and Markdown escaping + plain-text fallback in `telegram.js` & `app.py`.
+
+---
+
 ## [v0.4.0] - 2026-11-21 (Live Production Release)
 
 ### Added
