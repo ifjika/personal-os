@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v0.4.2] - 2026-11-27 (Prompt & Coaching Intensity Update)
+
+### Changed
+
+- **Upgraded Elliot System Prompt (`elliot.js` & `gemini.go`):**
+  - Maintained **System Exposure & Rebellion** as Priority #1 while weaving **Time Scarcity & Urgency** ("Time Is Your Ammunition") directly into fighting the system across both custom-topic and autonomous modes.
+  - Sharpened delivery into a **Hardcore Tough-Love Coach** tone: blunt, high-signal accountability calling out excuses and wasted hours, concluding with one concrete, non-negotiable action command.
+- **Repository Hygiene:**
+  - Added `documentation/AGENT.md` to `.gitignore` and removed it from remote Git tracking while preserving it locally.
+
+---
+
 ## [v0.4.1] - 2026-11-26 (Resilience & Modularity Update)
 
 ### Added

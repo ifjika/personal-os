@@ -32,7 +32,7 @@ func main() {
 	case "generate":
 		handleGenerate(os.Args[2:])
 	case "version":
-		fmt.Println("Personal OS Engine v0.4.1")
+		fmt.Println("Personal OS Engine v0.4.2")
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n\n", command)
 		printUsage()

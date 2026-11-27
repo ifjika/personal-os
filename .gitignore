@@ -31,3 +31,6 @@ storage/output/*
 # Operating system artifacts
 .DS_Store
 Thumbs.db
+
+# Local agent directives (keep private, do not publish to remote)
+documentation/AGENT.md

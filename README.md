@@ -3,7 +3,7 @@
 > _"Hello, friend. It's happening again. They have us convinced that if we stop moving, we stop existing..."_
 
 [![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat&logo=go)](https://go.dev/)
-[![Version](https://img.shields.io/badge/Version-v0.4.1-brightgreen)](documentation/CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-v0.4.2-brightgreen)](documentation/CHANGELOG.md)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Telegram Bot](https://img.shields.io/badge/Telegram-Bot%20API-2CA5E0?logo=telegram)](https://core.telegram.org/bots/api)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Serverless%20Cron-F38020?logo=cloudflare)](https://workers.cloudflare.com/)

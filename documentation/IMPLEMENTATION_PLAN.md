@@ -2,7 +2,7 @@
 
 ## Personal OS: AI Audio Motivation Engine
 
-**Current Version:** `v0.4.1` (Live Production)  
+**Current Version:** `v0.4.2` (Live Production)  
 **Last Updated:** `2026-11-21`
 
 > **Operational Directive:**
@@ -18,7 +18,7 @@
 | **Phase 2** | **Core Orchestrator & Chunker**        | Go domain boundaries, boundary chunker (120–280 chars), prompt generator, SQLite storage.              | `IN_PROGRESS` ⏳ | `v0.2.0-alpha` |
 | **Phase 3** | **Audio Post-Processing & TTS Client** | FFmpeg 250ms crossfade, EBU R128 mastering, Hugging Face 24/7 F5-TTS cloud deployment.                 | `COMPLETED` ✅   | `v0.2.0-alpha` |
 | **Phase 4** | **Web Studio & Telemetry**             | Terminal Noir UI (Next.js/Tailwind), canvas waveform visualizer, SSE log streamer.                     | `PENDING` 📋     | `v0.5.0-alpha` |
-| **Phase 5** | **Automation & Dispatch**              | 3-hourly Cloudflare Cron trigger, Telegram Bot audio dispatcher, mobile delivery, dynamic topics.      | `COMPLETED` ✅   | `v0.4.1`       |
+| **Phase 5** | **Automation & Dispatch**              | 3-hourly Cloudflare Cron trigger, Telegram Bot audio dispatcher, mobile delivery, dynamic topics.      | `COMPLETED` ✅   | `v0.4.2`       |
 
 ---
 
