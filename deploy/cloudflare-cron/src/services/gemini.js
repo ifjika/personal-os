@@ -57,7 +57,7 @@ export async function generateGeminiScript(apiKey, customContext = "") {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(8000)
+        signal: AbortSignal.timeout(20000)
       });
     } catch (err) {
       lastError = new Error(`Model ${model} network/timeout error: ${err.message}`);
